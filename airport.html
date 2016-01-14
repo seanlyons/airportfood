@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=utf-8 />
+  <title></title>
+	<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script src='https://api.tiles.mapbox.com/mapbox.js/v2.2.0/mapbox.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox.js/v2.2.0/mapbox.css' rel='stylesheet' />
+  <style>
+    body { margin:0; padding:0; }
+    .map { position:absolute; top:0; bottom:0; width:100%; }
+  </style>
+</head>
+<body>
+<!--div id='map-one' class='map'> </div-->
+<script>
+function decodeParameter(param) {
+   return decodeURIComponent(param.replace(/\+/g, ' '));
+}
+
+function handle_response(json) {
+    //console.log('handle_response');
+    //console.log(json);
+    
+        console.log('json:');
+        console.log(json);
+        if (json['nearest']['dist_to_airport'] <= .5) {
+            $('#it_looks_like_pre').text('It looks like you are in ');
+            about = '.';
+        } else {
+            $('#it_looks_like_pre').text('It looks like the closest airport to you is ');
+            about = ', about ' + json['dist_to_airport'].toFixed(1) + ' miles away.';
+        }
+        $('#it_looks_like_link').text(json['nearest']['name']);
+        $('#it_looks_like_link').attr("href", json['gmap']);
+
+        $('#it_looks_like_post').text(', in ' + json['nearest']['city'] + about);
+        
+        $('#restaurant_pre').text("According to Yelp, the best-rated food is ");
+        $('#restaurant_link').text(decodeParameter(json['name']));
+        $('#restaurant_link').attr("href", json['yelp']);
+        $('#restaurant_post').text(', about ' + json['dist_to_food'].toFixed(1) + ' miles from you.');
+}
+
+function obtain_x_y(position) {
+	x = position.coords.latitude;
+	y = position.coords.longitude;
+    
+    $("#your_x").data('geo', x);
+    $("#your_y").data('geo', y);
+    console.log('okey dokey: ' + x + ', ' + y);
+    
+    airport_endpoint = 'airport.php?x='+x+'&y='+y;
+    
+    console.log(airport_endpoint);
+    
+    console.log('beep 121');
+    //$.getJSON(airport_endpoint, function(json) {
+
+    $.ajax({
+        url: airport_endpoint,
+        method: 'GET',
+        timeout: 60,
+        async: false,
+    }).done(function(response) {
+console.log('done');
+console.log(response);
+        if(!response.success) {
+        } else {
+        }
+        handle_response(response);
+    }).fail(function( response ) {
+        console.log("ERROR");
+        console.log(response);
+        return;
+    });
+}
+
+navigator.geolocation.getCurrentPosition(obtain_x_y);
+
+</script>
+<div id="ajaxy">
+    <span id="it_looks_like_pre"></span><a id="it_looks_like_link" href="#"></a><span id="it_looks_like_post"></span>
+    <br/>
+    <span id="restaurant_pre"></span><a id="restaurant_link" href="#"></a><span id="restaurant_post"></span>
+    <br/>
+    <a id="gmap_link" href="#"></a>
+</div>
